@@ -16,6 +16,7 @@
 
     <properties>
         <java.version>1.8</java.version>
+        <weixin-java-cp.version>3.3.0</weixin-java-cp.version>
     </properties>
 
     <dependencies>
@@ -26,6 +27,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.binarywang</groupId>
+            <artifactId>weixin-java-cp</artifactId>
+            <version>${weixin-java-cp.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
