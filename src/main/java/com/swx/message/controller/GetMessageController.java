@@ -3,14 +3,17 @@ package com.swx.message.controller;
 import java.util.Date;
 import java.util.HashMap;
 
+import com.swx.message.service.iml.HandleMessageService;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.util.XmlUtils;
 import me.chanjar.weixin.common.util.crypto.WxCryptUtil;
 import me.chanjar.weixin.cp.bean.WxCpXmlOutTextMessage;
 import me.chanjar.weixin.cp.config.WxCpInMemoryConfigStorage;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,6 +32,9 @@ public class GetMessageController {
     private String encodingAESKey;
     @Value("${ewx.corpId}")
     private String corpId;
+
+    @Autowired
+    private HandleMessageService handleMessageService;
 
     public GetMessageController() {
     }
@@ -75,8 +81,26 @@ public class GetMessageController {
         HashMap<String, Object> dataMap = (HashMap)XmlUtils.xml2Map(result);
         log.info("datamap------->");
         dataMap.forEach((k, v) -> {
-            log.info("key:{}---->value{}", k, v);
+            log.info("key:{}---->value:{}", k, v);
         });
+        String message = (String) dataMap.get("value");
+        String res = (String) handleMessageService.handleMessage(message);
+        if(res==null){
+            res="找不到相关信息";
+        }
+        log.info("res - >{} ",res);
+        WxCpXmlOutTextMessage wxCpXmlOutTextMessage = outMessage(dataMap,res);
+        String outXml = wxCpXmlOutTextMessage.toEncryptedXml(setWxCMConfigStorage());
+        log.info("outxml - > {}", outXml);
+        return outXml;
+    }
+
+    /**
+     *
+     * @param dataMap
+     * @return
+     */
+    private WxCpXmlOutTextMessage outMessage(HashMap<String,Object> dataMap,String content){
         String fromUserName = (String)dataMap.get("FromUserName");
         log.info("fromUserName:" + fromUserName);
         String toUserName = (String)dataMap.get("ToUserName");
@@ -88,13 +112,15 @@ public class GetMessageController {
         wxCpXmlOutTextMessage.setToUserName(fromUserName);
         wxCpXmlOutTextMessage.setMsgType(msgType);
         wxCpXmlOutTextMessage.setCreateTime((new Date()).getTime());
-        wxCpXmlOutTextMessage.setContent("测试");
+        wxCpXmlOutTextMessage.setContent(content);
+        return wxCpXmlOutTextMessage;
+    }
+
+    private WxCpInMemoryConfigStorage setWxCMConfigStorage(){
         WxCpInMemoryConfigStorage wxCpInMemoryConfigStorage = new WxCpInMemoryConfigStorage();
         wxCpInMemoryConfigStorage.setAesKey(this.encodingAESKey);
         wxCpInMemoryConfigStorage.setCorpId(this.corpId);
         wxCpInMemoryConfigStorage.setToken(this.token);
-        String outXml = wxCpXmlOutTextMessage.toEncryptedXml(wxCpInMemoryConfigStorage);
-        log.info("outxml - > {}", outXml);
-        return outXml;
+        return wxCpInMemoryConfigStorage;
     }
 }
