@@ -83,7 +83,7 @@ public class GetMessageController {
         dataMap.forEach((k, v) -> {
             log.info("key:{}---->value:{}", k, v);
         });
-        String message = (String) dataMap.get("value");
+        String message = (String) dataMap.get("Content");
         String res = (String) handleMessageService.handleMessage(message);
         if(res==null){
             res="找不到相关信息";
